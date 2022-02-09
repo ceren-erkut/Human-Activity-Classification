@@ -1,135 +1,6 @@
-function ceren_erkut_21602906_hw3(question)
+function human_activity_classification
 clc
 close all
-switch question
-    case '1'
-        disp('1')
-        %% QUESTION 1 PART A
-        disp('=== Question 1 Part A solution is initiated. ===')
-        tic
-        dataset = h5read('assign3_data1.h5','/data');
-        gray_scale_samples = zeros(16,16,length(dataset));
-        for i=1:length(dataset)
-            gray_scale_samples(:,:,i) = dataset(:,:,1,i)*0.2126 + dataset(:,:,2,i)*0.7152 + dataset(:,:,3,i)*0.0722; % convert to grayscale
-            gray_scale_samples(:,:,i) = gray_scale_samples(:,:,i) - mean(mean(gray_scale_samples(:,:,i))); % subtract the mean
-        end
-        
-        gray_scale_std_value = std(reshape(gray_scale_samples, 16*16*length(dataset),1));
-        for k = 1:length(gray_scale_samples)
-            sample_image = gray_scale_samples(:,:,k);
-            % clip around +/- 3
-            sample_image(sample_image >= 3*gray_scale_std_value) = 3*gray_scale_std_value;
-            sample_image(sample_image <= -3*gray_scale_std_value) = -3*gray_scale_std_value;
-            % map samples
-            gray_scale_samples(:,:,k) = sample_image*(0.8 / (6*gray_scale_std_value));
-        end
-        gray_scale_samples = gray_scale_samples + 0.5;
-        random_index = randi([1, length(dataset)], 200,1);
-        
-        % display random 200 samples
-        figure
-        for i=1:200
-            subplot(20,10,i)
-            imshow(dataset(:,:,:,random_index(i)))
-        end
-        figure
-        for i=1:200
-            subplot(20,10,i)
-            imshow(gray_scale_samples(:,:,random_index(i)))
-        end
-        batch_input = zeros(16*16, length(dataset));
-        for i = 1:length(gray_scale_samples)
-            batch_input(:,i) = reshape(gray_scale_samples(:,:,i), 1, 16*16);
-        end
-        elapsedTime = toc/60;
-        disp("Time passed in Question 1 Part A : " + elapsedTime + " min");
-        
-        %% QUESTION 1 PART B
-        disp('=== Question 1 Part B solution is initiated. ===')
-        tic
-        L_in = 256;
-        L_hid = 96;
-        L_out = 256;
-        rho = 0.4;
-        lambda = 2 * 10^-4;
-        beta = 0.0015;
-        params = [L_in, L_hid, lambda, rho, beta];
-        
-        %input to hidden
-        w_o = sqrt(6 / (L_in + L_hid));
-        w_ih = -w_o + rand(L_hid, L_in)*2*w_o;
-        b_ih = -w_o + rand(L_hid, 1)*2*w_o;
-        %hidden to output
-        w_ho = w_ih';
-        w_o = sqrt(6 / (L_hid + L_out));
-        b_ho = -w_o + rand(L_out, 1)*2*w_o;
-        
-        learning_rate = 0.3;
-        epoch_num = 2000;
-        
-        epoch_error = zeros(1, epoch_num);
-        
-        for epoch = 1:epoch_num
-            
-            [w_ih, w_ho, b_ih, b_ho, epoch_error] = epoch_training(params, w_ih, w_ho, b_ih, b_ho, learning_rate, batch_input, epoch_error, epoch);
-            
-        end
-        
-        % test with trained network parameters
-        v_hidden_layer = w_ih * batch_input + b_ih;
-        o_hidden_layer = 1./(1 + exp(-v_hidden_layer));
-        v_output_layer = w_ho * o_hidden_layer + b_ho;
-        o_output_layer = 1./(1 + exp(-v_output_layer));
-        
-        % plot original and output images
-        figure
-        sgtitle("Comparisons with 2 Image Samples | " + "Rho: " + params(4) + ", Beta: " + params(5) + ", # of Hidden Neurons: " + params(2) + ", lambda: " + params(3));
-        rgb_images = dataset(:,:,:,7329);
-        subplot(3,3,1);
-        imshow(rgb_images);
-        title('Original RGB Images');
-        gray_images = reshape(batch_input(:,7329), 16, 16);
-        subplot(3,3,2);
-        imshow(gray_images);
-        title('Gray Scale Images');
-        output_autoencoder = reshape(o_output_layer(:,7329), 16, 16);
-        subplot(3,3,3);
-        imshow(output_autoencoder);
-        title('Output Images of Autoencoder');
-        
-        rgb_images = dataset(:,:,:,7076);
-        subplot(2,3,4);
-        imshow(rgb_images);
-        title('Original RGB Images');
-        gray_images = reshape(batch_input(:,7076), 16, 16);
-        subplot(2,3,5);
-        imshow(gray_images);
-        title('Gray Scale Images');
-        output_autoencoder = reshape(o_output_layer(:,7076), 16, 16);
-        subplot(2,3,6);
-        imshow(output_autoencoder);
-        title('Output Images of Autoencoder');
-        
-        figure
-        plot(epoch_error);
-        title("Cost versus Epoch | " + "Rho: " + params(4) + " Beta: " + params(5) + ", # of Hidden Neurons: " + params(2) + ", lambda: " + params(3));
-        elapsedTime = toc/60;
-        disp("Time passed in Question 1 Part B : " + elapsedTime + " min");
-        
-        %% QUESTION 1 PART C & D
-        disp('=== Question 1 Part C & D solution is initiated. ===')
-        figure
-        sgtitle("Hidden Layer Weights | " + "Rho: " + params(4) + " Beta: " + params(5) + ", # of Hidden Neurons: " + params(2) + ", lambda: " + params(3));
-        num_hidden_weights = ceil(sqrt(L_hid));
-        for i = 1:L_hid
-            subplot(num_hidden_weights, num_hidden_weights, i);
-            picture = reshape(w_ih(i,:), 16, 16);
-            imshow(picture);
-        end
-        
-        
-    case '3'
-        disp('3')
         
         trX = h5read('assign3_data3.h5','/trX');
         tstX = h5read('assign3_data3.h5','/tstX');
@@ -154,9 +25,9 @@ switch question
         w0_ho = sqrt(6/(hidden_size+output_size));
         w0_hh = sqrt(6/(2*hidden_size));
         
-        %% QUESTION 3 PART A
+        %% PART A
         %tic
-        disp('=== Question 3 Part A solution is initiated. ===')
+        disp('=== Part A solution is initiated. ===')
         w_ho = -w0_ho + 2 * w0_ho * rand(output_size, hidden_size);
         w_hh = -w0_hh + 2* w0_hh * rand(hidden_size, hidden_size);
         w_ih = -w0_ih + 2 * w0_ih * rand(hidden_size, input_size);
@@ -176,7 +47,7 @@ switch question
         updated_b_h = zeros(hidden_size, 1);
         updated_b_o = zeros(output_size, 1);
         
-        create validation set
+        % create validation set
         validation_set = zeros(3,150,300);
         validation_set_label = zeros(class_num,300);
         training_set = zeros(3,150,2700);
@@ -377,9 +248,9 @@ switch question
         disp("Time passed in Question 3 Part A : " + elapsedTime + " min");
         
         
-        %% QUESTION 3 PART B
+        %% PART B
         tic
-        disp('=== Question 3 Part B solution is initiated. ===')
+        disp('=== Part B solution is initiated. ===')
         
         % initialization
         
@@ -665,9 +536,9 @@ switch question
         elapsedTime = toc/60;
         disp("Time passed in Question 3 Part B : " + elapsedTime + " min");
         
-        %% QUESTION 3 PART C
+        %% PART C
         tic
-        disp('=== Question 3 Part C solution is initiated. ===')
+        disp('=== Part C solution is initiated. ===')
         w0_y = sqrt(6/(hidden_size+output_size));
         w0_u = sqrt(6/(3+hidden_size));
         w0_w = sqrt(6/(2*hidden_size));
@@ -926,72 +797,6 @@ end
 end
 
 %% Functions
-
-function [w_ih, w_ho, b_ih, b_ho, epoch_error] = epoch_training(params, w_ih, w_ho, b_ih, b_ho, learning_rate, batch_input, epoch_error, epoch)
-
-We = {w_ih, w_ho, b_ih, b_ho};
-[J, Jgrad] = aeCost(We, batch_input, params);
-
-del_w_ih = cell2mat(Jgrad(1));
-del_w_ho = cell2mat(Jgrad(2));
-del_b_ih = cell2mat(Jgrad(3));
-del_b_ho = cell2mat(Jgrad(4));
-
-% update equations
-del_w = del_w_ih + del_w_ho';
-w_ih = w_ih - (1/length(batch_input)) * learning_rate * del_w;
-w_ho = w_ho - (1/length(batch_input)) * learning_rate * del_w';
-b_ih = b_ih - (1/length(batch_input)) * learning_rate * del_b_ih;
-b_ho = b_ho - (1/length(batch_input)) * learning_rate * del_b_ho;
-epoch_error(epoch) = J;
-%if epoch>1
-%disp( "Error Dif: " + ( error_per_epoch(epoch-1) - error_per_epoch(epoch)))
-%end
-
-end
-
-function [J, Jgrad] = aeCost(We, batch_input, params)
-
-w_ih = cell2mat(We(1));
-w_ho = cell2mat(We(2));
-b_ih = cell2mat(We(3));
-b_ho = cell2mat(We(4));
-
-% forward pass equations
-v_hidden_layer = w_ih * batch_input + b_ih;
-o_hidden_layer = 1./(1+exp(-v_hidden_layer));
-v_output_layer = w_ho * o_hidden_layer + b_ho;
-o_output_layer = 1./(1+exp(-v_output_layer));
-% the average activation of hidden unit b across training samples
-rho_b = (1/length(batch_input))*sum(o_hidden_layer, 2);
-
-% cost calculation with 3 terms
-mse_error_term = (0.5/length(batch_input)) * sum(sum((batch_input-o_output_layer) .* (batch_input-o_output_layer)));
-tykhonov_term = (0.5*params(3)) * (sum(sum(w_ih.*w_ih)) + sum(sum(w_ho.*w_ho)));
-kullback_leiber_term = params(5) * sum(params(4) * (log(params(4)) - log(rho_b)) + (1-params(4)) * (log(1-params(4))-log(1-rho_b)));
-
-% total cost
-J = mse_error_term + tykhonov_term + kullback_leiber_term;
-
-% hidden-output layer gradient equations
-sigma_ho = (-(batch_input-o_output_layer)) .* (o_output_layer.*(1-o_output_layer));
-mse_gradient_ho = sigma_ho * o_hidden_layer';
-tykhonov_gradient_ho = params(3) * w_ho;
-KL_gradient_ho = 0;
-del_J_grad_ho = mse_gradient_ho + tykhonov_gradient_ho + KL_gradient_ho;
-del_J_grad_b_ho = sigma_ho * ones(length(batch_input), 1);
-
-% input-hidden layer gradient equations
-sigma_ih = w_ho' * sigma_ho .* (o_hidden_layer .* (1-o_hidden_layer));
-mse_gradient_ih = sigma_ih * batch_input';
-tykhonov_gradient_ih = params(3) * w_ih;
-KL_gradient_ih = params(5) * ((-params(4)./rho_b)+((1-params(4))./(1-rho_b))) .* (o_hidden_layer.*(1-o_hidden_layer)) * batch_input';
-del_J_grad_ih = mse_gradient_ih + tykhonov_gradient_ih + KL_gradient_ih;
-del_J_grad_b_ih = sigma_ih * ones(length(batch_input), 1) + params(5) * ((-params(4)./rho_b)+((1-params(4))./(1-rho_b))) .* (o_hidden_layer.*(1-o_hidden_layer)) * ones(length(batch_input), 1);
-
-
-Jgrad = {del_J_grad_ih, del_J_grad_ho, del_J_grad_b_ih, del_J_grad_b_ho};
-end
 
 %
 
