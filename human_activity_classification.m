@@ -794,7 +794,6 @@ close all
         
         
 end
-end
 
 %% Functions
 
